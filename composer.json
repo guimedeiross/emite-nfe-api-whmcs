@@ -1,0 +1,10 @@
+{
+    "autoload": {
+        "psr-4": {
+            "app\\": "../POSTPHP/"
+        }
+    },
+    "require": {
+        "vlucas/phpdotenv": "^5.4"
+    }
+}
