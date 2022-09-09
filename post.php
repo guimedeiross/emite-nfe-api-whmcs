@@ -9,7 +9,6 @@ require_once './WHMCS/WhmcsApi.php';
 const pathLogError = "Errors.log";
 
 $WhmcsApi = new WhmcsApi;
-$gte=0;
 
 
 function build_nfe(WhmcsApi $WhmcsApi): string
@@ -20,7 +19,7 @@ function build_nfe(WhmcsApi $WhmcsApi): string
     $idsInvoice = [];
     $Nfs = [];
 
-    $invoices = $WhmcsApi->get_invoices(null, 'Paid', null, 'desc', 2500)['invoices']['invoice'];
+    $invoices = $WhmcsApi->get_invoices(null, 'Paid', null, 'desc')['invoices']['invoice'];
     // ordena por data de pagamento
     usort($invoices, function ($a, $b) {
         return (strtotime($a['datepaid']) < strtotime($b['datepaid']) ? -1 : 1);
@@ -32,27 +31,26 @@ function build_nfe(WhmcsApi $WhmcsApi): string
             if (!preg_match($pattern, $k['notes'])) {
                 //EMITE NF
                 array_push($idsInvoice, $k['id']);
-                $cnpjOrCpf = formatCPFAndCNPJAndCEP($WhmcsApi->get_clients_details($k['userid'])['client']['customfields'][0]['value']);
-                $isCpfOrCnpj = verify_cpf_or_cnpj($cnpjOrCpf) ? 'cnpj' : 'cpf';
+                /* preenche os campos */
+                $fields = fill_fileds_to_nfe($WhmcsApi, $k, $idsInvoice);
 
                 array_push($Nfs, [
                     'numeroRps' => $k['id'],
                     'serieRps' => "302",
-                    'dataEmissao' => $k['date'],
-                    'dataCompetencia' => strtotime($k['duedate']) > strtotime(date('Y-m-d')) ? date('Y-m-d') : $k['duedate'],
-                    'valorServico' => $k['subtotal'],
-                    $isCpfOrCnpj => $cnpjOrCpf,
-                    'razaoSocial' => $WhmcsApi->get_clients_details($k['userid'])['client']['companyname'],
-                    'endereco' => $WhmcsApi->get_clients_details($k['userid'])['client']['address1'],
+                    'dataEmissao' => $fields['dataEmissao'],
+                    'dataCompetencia' => $fields['dataCompetencia'],
+                    'valorServico' => $fields['valorServico'],
+                    $fields['isCpfOrCnpj'] => $fields['cnpjOrCpf'],
+                    'razaoSocial' => $fields['razaoSocial'],
+                    'endereco' => $fields['endereco'],
                     'numero' => "",
-                    'bairro' => $WhmcsApi->get_clients_details($k['userid'])['client']['address2'],
-                    'codigoMunicipio' => getCityId($WhmcsApi->get_clients_details($k['userid'])['client']['state'], $WhmcsApi->get_clients_details($k['userid'])['client']['city']),
-                    'uf' => $WhmcsApi->get_clients_details($k['userid'])['client']['state'],
-                    'cep' => formatCPFAndCNPJAndCEP($WhmcsApi->get_clients_details($k['userid'])['client']['postcode']),
-                    'email' => $WhmcsApi->get_clients_details($k['userid'])['client']['email'],
-                    'discriminacao' => get_description_invoice($WhmcsApi, $idsInvoice),
+                    'bairro' => $fields['bairro'],
+                    'codigoMunicipio' => '',
+                    'uf' => $fields['uf'],
+                    'cep' => $fields['cep'],
+                    'email' => $fields['email'],
+                    'discriminacao' => $fields['discriminacao'],
                 ]);
-                $GLOBALS['gte']++;
                 //$updateNote = $WhmcsApi->update_invoice_notes_default($k['id']);
                 //if ($updateNote['result'] !== 'success') throw new Error('Erro ao atualiza notas da NF de ID ' . $k['id'], 1002);
             }
@@ -61,31 +59,21 @@ function build_nfe(WhmcsApi $WhmcsApi): string
     return json_encode($Nfs);
 }
 
-function get_description_invoice(WhmcsApi $WhmcsApi, array $idsInvoice): string
-{
-    foreach ($idsInvoice as $i) {
-        $items = $WhmcsApi->get_invoice($i)['items']['item'];
-        $description = addDescriptionProductOrService($items);
-        return $description;
-    }
-}
-
 function getCityId(string $state, string $city): string
 {
     try {
-        $IdCity = extractIdCityBaseName($state, $city);
+        $IdCity = extract_id_city_based_on_name($state, $city);
         return $IdCity;
     } catch (Throwable $err) {
-        addLogError($err);
+        add_log_error($err);
     }
 }
 
 try {
     $Nfs = build_nfe($WhmcsApi);
-    //echo $Nfs;
-    echo $GLOBALS['gte'];
+    echo $Nfs;
 } catch (\Throwable $th2) {
-    addLogError($th2);
+    add_log_error($th2);
 }
 
 exit;
