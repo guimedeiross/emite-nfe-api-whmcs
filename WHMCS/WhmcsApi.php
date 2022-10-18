@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once 'vendor/autoload.php';
+require 'vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 1));
 $dotenv->load();
@@ -101,7 +101,7 @@ class WhmcsApi
         if ($order) $invoices['order'] = $order;
         if ($limitnum) $invoices['limitnum'] = $limitnum;
         if ($limitstart) $invoices['limitstart'] = $limitstart;
-        
+
         $response = $this->build_query_api($invoices);
 
         return $response;
@@ -120,20 +120,28 @@ class WhmcsApi
     }
     public function update_invoice_notes_default(int $invoiceId, ?bool $rollback = false): iterable
     {
-        $pattern = "/__e__NFEEMITIDA|[\n\r\n]__e__NFEEMITIDA$/";
+        $generator = $this->get_invoice($invoiceId);
         if ($rollback) {
-            $generator = $this->get_invoice($invoiceId);
             foreach ($generator as $notes) {
-                $notesNovo = preg_replace($pattern, ' ', $notes['notes']);
-                $invoice = array(
-                    'action' => 'UpdateInvoice',
-                    'invoiceid' => $invoiceId,
-                    'responsetype' => 'json',
-                    'notes' => $notesNovo
-                );
+                $notes = $notes['notes'];
+                if ($notes !== "") {
+                    $notesNovo = $notes . PHP_EOL . "__e__PROBLEMA";
+                    $invoice = array(
+                        'action' => 'UpdateInvoice',
+                        'invoiceid' => $invoiceId,
+                        'responsetype' => 'json',
+                        'notes' => $notesNovo
+                    );
+                } else {
+                    $invoice = array(
+                        'action' => 'UpdateInvoice',
+                        'invoiceid' => $invoiceId,
+                        'responsetype' => 'json',
+                        'notes' => '__e__PROBLEMA'
+                    );
+                }
             }
         } else {
-            $generator = $this->get_invoice($invoiceId);
             foreach ($generator as $notes) {
                 $notes = $notes['notes'];
                 if ($notes !== "") {
