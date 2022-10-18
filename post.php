@@ -50,7 +50,7 @@ function build_nfe(WhmcsApi $WhmcsApi): array
                         'codigoMunicipio' => '4209102',
                         'uf' => $fields['uf'],
                         'cep' => $fields['cep'],
-                        'email' => 'guilherme.medeiros@joinvix.com.br', //$fields['email'],
+                        'email' => $fields['email'],
                         'discriminacao' => $fields['discriminacao']
                     ]);
                     $GLOBALS['qtdeNFFiltrada']++;
