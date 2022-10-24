@@ -5,6 +5,7 @@ declare(strict_types=1);
 date_default_timezone_set("America/Sao_Paulo");
 
 require 'sendMail.php';
+require 'WHMCS/WhmcsApi.php';
 
 class Utils
 {
@@ -40,6 +41,7 @@ class Utils
         $value = str_replace("-", "", $value);
         $value = str_replace("/", "", $value);
         $value = str_replace(" ", "", $value);
+        $value = str_replace("\\", "", $value);
         return $value;
     }
 
@@ -56,18 +58,27 @@ class Utils
             }
             throw new Error("Tamanho do campo CPF/CNPJ " . $value . " do cliente " . $idInvoice . " está com problemas", 1003);
         } catch (\Throwable $th) {
-            $this->add_log_error($th);
+            $this->add_log_error($th, $idInvoice);
             return true;
         }
     }
 
-    public function add_log_error(Throwable $err)
+    public function add_log_error(Throwable $err, ?string $idInvoice = null): void
     {
+        $WhmcsApi = new WhmcsApi;
         $email = new SendMail;
         $today = date('d-m-Y H:i');
         file_put_contents('Errors.log', "$today " . "{$err->getCode()} " . $err->getMessage() . PHP_EOL, FILE_APPEND);
-        $email->sendMail("Erro NFe {$err->getCode()}", "guilherme.medeiros@joinvix.com.br", "$today " . "{$err->getCode()} " . $err->getMessage());
-        if ($err->getCode() !== 1003 || $err->getCode() !== 1008 || $err->getCode() !== 1002) die();
+        $email->sendMail("Erro NFe {$err->getCode()}", "infra@joinvix.com.br", "$today " . "{$err->getCode()} " . $err->getMessage());
+        if ($err->getCode() === 1002 || $err->getCode() === 1005 || $err->getCode() === 1009) die();
+        try {
+            $generator = $WhmcsApi->update_invoice_notes_default(intval($idInvoice), true);
+            foreach ($generator as $updateNote) {
+                if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . $idInvoice . ' no POST', 1009);
+            }
+        } catch (\Throwable $th) {
+            $this->add_log_error($th);
+        }
     }
 
     public function add_description_product_or_service(array $mensagens): string

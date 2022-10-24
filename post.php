@@ -78,7 +78,7 @@ try {
     $tempo = ($end - $start) / 60;
     file_put_contents('tempo.txt', $tempo . PHP_EOL, FILE_APPEND);
     file_put_contents('qtdeNFFiltrada.txt', $GLOBALS['qtdeNFFiltrada']);
-    execute_post($Nfs[0]);
+    if (count($Nfs) > 0) execute_post($Nfs[0]);
 } catch (\Throwable $th2) {
     $GLOBALS['utils']->add_log_error($th2);
 }
@@ -113,6 +113,7 @@ function execute_post(array $NfsToPost): void
             do {
                 $situacao = verifica_emitiu_nf($result);
             } while ($situacao === 2);
+            $pattern = "/__e__NFEEMITIDA|__e__PROBLEMA$/";
             if ($situacao !== 4) {
                 throw new Exception('Problema ao emitir a NF de ID ' . $NfsToPost['numeroRps'], 1008);
             } else {
@@ -121,6 +122,7 @@ function execute_post(array $NfsToPost): void
                 foreach ($generator as $updateNote) {
                     if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . strval($NfsToPost['numeroRps']), 1002);
                 }
+                file_put_contents('ProtocolosEmitidos.txt', $result . PHP_EOL, FILE_APPEND);
             }
         } else {
             var_dump($resultDecode);
