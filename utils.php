@@ -72,9 +72,11 @@ class Utils
         $email->sendMail("Erro NFe {$err->getCode()}", "infra@joinvix.com.br", "$today " . "{$err->getCode()} " . $err->getMessage());
         if ($err->getCode() === 1002 || $err->getCode() === 1005 || $err->getCode() === 1009) die();
         try {
-            $generator = $WhmcsApi->update_invoice_notes_default(intval($idInvoice), true);
-            foreach ($generator as $updateNote) {
-                if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . $idInvoice . ' no POST', 1009);
+            if ($idInvoice !== null) {
+                $generator = $WhmcsApi->update_invoice_notes_default(intval($idInvoice), true);
+                foreach ($generator as $updateNote) {
+                    if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . $idInvoice . ' no POST', 1009);
+                }
             }
         } catch (\Throwable $th) {
             $this->add_log_error($th);
