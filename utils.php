@@ -70,7 +70,7 @@ class Utils
         $today = date('d-m-Y H:i');
         file_put_contents('Errors.log', "$today " . "{$err->getCode()} " . $err->getMessage() . PHP_EOL, FILE_APPEND);
         $email->sendMail("Erro NFe {$err->getCode()}", "infra@joinvix.com.br", "$today " . "{$err->getCode()} " . $err->getMessage());
-        if ($err->getCode() === 1002 || $err->getCode() === 1005 || $err->getCode() === 1009) die();
+        if ($err->getCode() === 1002 || $err->getCode() === 1005 || $err->getCode() === 1009 || $err->getCode() === 1010) die();
         try {
             if ($idInvoice !== null) {
                 $generator = $WhmcsApi->update_invoice_notes_default(intval($idInvoice), true);
@@ -105,7 +105,7 @@ class Utils
             $fields['numeroRps'] = $invoice['id'];
             $fields['dataEmissao'] = $invoice['date'];
             $fields['dataCompetencia'] = strtotime($invoice['duedate']) > strtotime(date('Y-m-d')) ? date('Y-m-d') : $invoice['duedate'];
-            $fields['valorServico'] = $invoice['subtotal'];
+            $fields['valorServico'] = $invoice['total'];
             $fields['firstNameWithLastName'] = $clientDetails['firstname'] . " " . $clientDetails['lastname'];
             $fields['razaoSocial'] = $clientDetails['client']['companyname'];
             $fields['razaoSocial'] = $this->verify_field_blank($fields['razaoSocial']) ? trim($fields['firstNameWithLastName']) : trim($fields['razaoSocial']);

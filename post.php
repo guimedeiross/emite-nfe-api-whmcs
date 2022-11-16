@@ -18,7 +18,6 @@ $start = microtime(true);
 
 function build_nfe(WhmcsApi $WhmcsApi): array
 {
-
     $today = date('d/m/Y');
     $yesterday = date('d/m/Y', strtotime("-1 days"));
     $pattern = "/__e__NFEEMITIDA|__e__PROBLEMA$/";
@@ -28,6 +27,19 @@ function build_nfe(WhmcsApi $WhmcsApi): array
 
     foreach ($generator as $value) {
         foreach ($value['invoices']['invoice'] as $k) {
+            $creditosNf = floatval($k['credit']);
+            if ($creditosNf > 0 && $creditosNf === floatval($k['subtotal']) && !preg_match($pattern, $k['notes'])) {
+                try {
+                    $generatorUpdateNf = $WhmcsApi->update_invoice_notes_default(intval($k['id']));
+                    foreach ($generatorUpdateNf as $updateNote) {
+                        if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar campo notas da NF de ID ' . strval($k['id']), 1010);
+                    }
+                    echo $k['id'] . ' ';
+                    continue;
+                } catch (\Throwable $th) {
+                    $GLOBALS['utils']->add_log_error($th);
+                }
+            }
             $datePaid = new DateTime($k['datepaid']);
             $datePaidD_M_Y = $datePaid->format('d/m/Y');
             if ($today == $datePaidD_M_Y || $yesterday == $datePaidD_M_Y) {
@@ -76,9 +88,11 @@ try {
     $Nfs = build_nfe($WhmcsApi);
     $end = microtime(true);
     $tempo = ($end - $start) / 60;
-    file_put_contents('tempo.txt', $tempo . PHP_EOL, FILE_APPEND);
-    file_put_contents('qtdeNFFiltrada.txt', $GLOBALS['qtdeNFFiltrada']);
-    if (count($Nfs) > 0) execute_post($Nfs[0]);
+    print_r($Nfs);
+    exit;
+    #file_put_contents('tempo.txt', $tempo . PHP_EOL, FILE_APPEND);
+    #file_put_contents('qtdeNFFiltrada.txt', $GLOBALS['qtdeNFFiltrada']);
+    #if (count($Nfs) > 0) execute_post($Nfs[0]);
 } catch (\Throwable $th2) {
     $GLOBALS['utils']->add_log_error($th2);
 }

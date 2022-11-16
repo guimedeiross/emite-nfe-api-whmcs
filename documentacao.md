@@ -10,3 +10,4 @@
 - 1007 - Erro ao enviar EmailDetalhes erro: $erroMensagem - Função sendMail em sendMail.php
 - 1008 - Problema ao emitir a NF de ID $id - Função execute_post em post.php
 - 1009 - Erro ao atualizar notas da NF de ID $id no POST - Função add_log_error em utils.php
+- 1010 - Erro ao atualizar campo notas da NF de ID $id - Função build_nfe em post.php
