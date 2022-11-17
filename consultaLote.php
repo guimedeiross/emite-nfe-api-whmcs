@@ -8,7 +8,7 @@ class ConsultaLote
 
     public function consulta_lote(string $protocol): string
     {
-        $body = '<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://nfewshomologacao.joinville.sc.gov.br"><soapenv:Header/><soapenv:Body><ConsultarLoteRpsEnvio x00mlns="http://nfews.joinville.sc.gov.br"><Prestador><CpfCnpj><Cnpj>09387540000144</Cnpj></CpfCnpj><InscricaoMunicipal>92680</InscricaoMunicipal></Prestador>' . "<Protocolo>${protocol}</Protocolo></ConsultarLoteRpsEnvio></soapenv:Body></soapenv:Envelope>";
+        $body = '<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://nfews.joinville.sc.gov.br"><soapenv:Header/><soapenv:Body><ConsultarLoteRpsEnvio x00mlns="http://nfews.joinville.sc.gov.br"><Prestador><CpfCnpj><Cnpj>09387540000144</Cnpj></CpfCnpj><InscricaoMunicipal>92680</InscricaoMunicipal></Prestador>' . "<Protocolo>${protocol}</Protocolo></ConsultarLoteRpsEnvio></soapenv:Body></soapenv:Envelope>";
 
         $URL_POST = "https://nfemws.joinville.sc.gov.br/NotaFiscal/Servicos.asmx";
         $curl = curl_init();
