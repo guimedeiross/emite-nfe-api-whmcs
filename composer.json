@@ -1,0 +1,12 @@
+{
+    "autoload": {
+        "psr-4": {
+            "app\\": "../POSTPHP/"
+        }
+    },
+    "require": {
+        "vlucas/phpdotenv": "^5.4",
+        "phpmailer/phpmailer": "^6.6",
+        "sendgrid/sendgrid": "^8.0"
+    }
+}
