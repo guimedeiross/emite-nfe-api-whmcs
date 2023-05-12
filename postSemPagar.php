@@ -8,6 +8,7 @@ require_once 'utils.php';
 
 require_once './WHMCS/WhmcsApi.php';
 require_once './consultaLote.php';
+require_once './getNfClientWithoutPaying.php';
 
 $GLOBALS['utils'] = new Utils;
 $GLOBALS['qtdeNFFiltrada'] = 0;
@@ -23,7 +24,6 @@ function build_nfe(WhmcsApi $WhmcsApi): array
     $pattern = "/__e__NFEEMITIDA|__e__PROBLEMA$/";
     $Nfs = [];
 
-    require_once './getNfClientWithoutPaying.php';
     $userIdsCheckNFSemBoleto = consultarClientes();
 
     $generator = $WhmcsApi->get_invoices(null, null, OrderByGetInvoices::date, 'desc', null);
@@ -35,7 +35,7 @@ function build_nfe(WhmcsApi $WhmcsApi): array
                 try {
                     $generatorUpdateNf = $WhmcsApi->update_invoice_notes_default(intval($k['id']));
                     foreach ($generatorUpdateNf as $updateNote) {
-                        if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar campo notas da NF de ID ' . strval($k['id']), 1010);
+                        if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar campo notas da NF de ID ' . strval($k['id']), 1012);
                     }
                     continue;
                 } catch (\Throwable $th) {
@@ -90,6 +90,8 @@ function getCityId(string $state, string $city): string
 
 try {
     $Nfs = build_nfe($WhmcsApi);
+    echo count($Nfs) > 0 ? var_dump($Nfs) : 'Sem Cliente para emitir sem pagamento';
+    exit;
     /*$end = microtime(true);
     $tempo = ($end - $start) / 60;
     file_put_contents('tempo.txt', $tempo . PHP_EOL, FILE_APPEND);
@@ -121,7 +123,7 @@ function execute_post(array $NfsToPost): void
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($ch);
         $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($http_status !== 200) throw new Exception("Erro ao enviar requisição POST", 1004);
+        if ($http_status !== 200) throw new Exception("Erro ao enviar requisição POST", 1011);
         curl_close($ch);
         $resultDecode = json_decode($result);
         if ($resultDecode == NULL) {
@@ -130,12 +132,12 @@ function execute_post(array $NfsToPost): void
                 $situacao = verifica_emitiu_nf($result);
             } while ($situacao === 2);
             if ($situacao !== 4) {
-                throw new Exception('Problema ao emitir a NF de ID ' . $NfsToPost['numeroRps'], 1008);
+                throw new Exception('Problema ao emitir a NF de ID ' . $NfsToPost['numeroRps'], 1013);
             } else {
                 //emite NF
                 $generator = $WhmcsApi->update_invoice_notes_default(intval($NfsToPost['numeroRps']));
                 foreach ($generator as $updateNote) {
-                    if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . strval($NfsToPost['numeroRps']), 1002);
+                    if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . strval($NfsToPost['numeroRps']), 1014);
                 }
                 file_put_contents('ProtocolosEmitidosNfSemPagar.txt', $NfsToPost['numeroRps'] . ' - ' . $result . PHP_EOL, FILE_APPEND);
             }
@@ -145,7 +147,7 @@ function execute_post(array $NfsToPost): void
     } catch (\Throwable $th) {
         $generator = $WhmcsApi->update_invoice_notes_default(intval($NfsToPost['numeroRps']), true);
         foreach ($generator as $updateNote) {
-            if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . $NfsToPost['numeroRps'] . ' no POST', 1005);
+            if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . $NfsToPost['numeroRps'] . ' no POST', 1015);
         }
         $GLOBALS['utils']->add_log_error($th);
     }

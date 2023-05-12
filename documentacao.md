@@ -11,3 +11,8 @@
 - 1008 - Problema ao emitir a NF de ID $id - Função execute_post em post.php
 - 1009 - Erro ao atualizar notas da NF de ID $id no POST - Função add_log_error em utils.php
 - 1010 - Erro ao atualizar campo notas da NF de ID $id - Função build_nfe em post.php
+- 1011 - Erro ao enviar requisição POST - Função execute_post em postSemPagar.php
+- 1012 - Erro ao atualizar campo notas da NF de ID $id - Função build_nfe em postSemPagar.php
+- 1013 - Problema ao emitir a NF de ID $id - Função execute_post em postSemPagar.php
+- 1014 - Erro ao atualizar notas da NF de ID $id - Função build_nfe em postSemPagar.php
+- 1015 - Erro ao atualizar notas da NF de ID $id no POST - Função execute_post em postSemPagar.php
