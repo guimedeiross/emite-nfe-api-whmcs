@@ -5,7 +5,8 @@ require 'vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__FILE__));
 $dotenv->load();
 
-function consultarClientes(): array {
+function consultarClientes(): array
+{
 
     $userIdsCheckNFSemBoleto = [];
     // Configurações de conexão com o banco de dados
@@ -23,11 +24,19 @@ function consultarClientes(): array {
     }
 
     // Consulta SQL
-    $query = "SELECT tblclients.*
-              FROM tblclients
-              JOIN tblcustomfieldsvalues
-              ON tblclients.id = tblcustomfieldsvalues.relid
-              WHERE tblcustomfieldsvalues.fieldid = 124 AND tblcustomfieldsvalues.value = 'on'";
+    $query = "SELECT *
+    FROM (
+        SELECT tblinvoices.*, ROW_NUMBER() OVER (PARTITION BY tblinvoices.userid ORDER BY tblinvoices.date DESC) AS rn
+        FROM tblinvoices
+        WHERE tblinvoices.userid IN (
+            SELECT tblclients.id
+            FROM tblclients
+            JOIN tblcustomfieldsvalues ON tblclients.id = tblcustomfieldsvalues.relid
+            WHERE tblcustomfieldsvalues.fieldid = 124 AND tblcustomfieldsvalues.value = 'on'
+        )
+    ) AS subquery
+    WHERE rn = 1
+    AND subquery.notes NOT REGEXP '__e__NFEEMITIDA|__e__PROBLEMA$'";
 
     // Executando a consulta
     if ($result = $mysqli->query($query)) {
@@ -36,10 +45,11 @@ function consultarClientes(): array {
             // Percorrendo os registros retornados
             while ($row = $result->fetch_assoc()) {
                 // Faça algo com cada registro retornado
-                array_push($userIdsCheckNFSemBoleto,$row['id']);
+                array_push($userIdsCheckNFSemBoleto, $row['id']);
             }
         } else {
             echo 'Nenhum registro encontrado.';
+            die();
         }
 
         // Liberando os recursos do resultado da consulta
@@ -53,4 +63,3 @@ function consultarClientes(): array {
 
     return $userIdsCheckNFSemBoleto;
 }
-?>

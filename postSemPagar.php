@@ -19,59 +19,46 @@ $start = microtime(true);
 
 function build_nfe(WhmcsApi $WhmcsApi): array
 {
-    $today = date('d/m/Y');
-    $yesterday = date('d/m/Y', strtotime("-1 days"));
-    $pattern = "/__e__NFEEMITIDA|__e__PROBLEMA$/";
     $Nfs = [];
 
     $userIdsCheckNFSemBoleto = consultarClientes();
 
-    $generator = $WhmcsApi->get_invoices(null, null, OrderByGetInvoices::date, 'desc', null);
-
-    foreach ($generator as $value) {
-        foreach ($value['invoices']['invoice'] as $k) {
-            $creditosNf = floatval($k['credit']);
-            if ($creditosNf > 0 && $creditosNf === floatval($k['subtotal']) && !preg_match($pattern, $k['notes'])) {
+    foreach ($userIdsCheckNFSemBoleto as $idInvoiceEmitir) {
+        $generator = $WhmcsApi->get_invoice(intval($idInvoiceEmitir));
+        foreach ($generator as $invoice) {
+            $creditosNf = floatval($invoice['credit']);
+            if ($creditosNf > 0 && $creditosNf === floatval($invoice['subtotal'])) {
                 try {
-                    $generatorUpdateNf = $WhmcsApi->update_invoice_notes_default(intval($k['id']));
+                    $generatorUpdateNf = $WhmcsApi->update_invoice_notes_default(intval($idInvoiceEmitir));
                     foreach ($generatorUpdateNf as $updateNote) {
-                        if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar campo notas da NF de ID ' . strval($k['id']), 1012);
+                        if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar campo notas da NF de ID ' . strval($idInvoiceEmitir), 1012);
                     }
                     continue;
                 } catch (\Throwable $th) {
                     $GLOBALS['utils']->add_log_error($th);
                 }
             }
-            //emitir sem confirmação de pagamento
-            if (in_array(intval($k["userid"]), $userIdsCheckNFSemBoleto)) {
-                //$datePaid = new DateTime($k['datepaid']);
-                //$datePaidD_M_Y = $datePaid->format('d/m/Y');
-                //if ($today == $datePaidD_M_Y || $yesterday == $datePaidD_M_Y) {
-                if (!preg_match($pattern, $k['notes'])) {
-                    //EMITE NF
-                    /* preenche os campos */
-                    $fields = $GLOBALS['utils']->fill_fileds_to_nfe($WhmcsApi, $k);
-
-                    array_push($Nfs, [
-                        'numeroRps' => strval($k['id']),
-                        'serieRps' => "302",
-                        'dataEmissao' => $fields['dataEmissao'],
-                        'dataCompetencia' => $fields['dataCompetencia'],
-                        'valorServico' => $fields['valorServico'],
-                        $fields['isCpfOrCnpj'] => $fields['cnpjOrCpf'],
-                        'razaoSocial' => $fields['razaoSocial'],
-                        'endereco' => $fields['endereco'],
-                        'numero' => "",
-                        'bairro' => $fields['bairro'],
-                        'codigoMunicipio' => '4209102',
-                        'uf' => $fields['uf'],
-                        'cep' => $fields['cep'],
-                        'email' => $fields['email'],
-                        'discriminacao' => $fields['discriminacao']
-                    ]);
-                    $GLOBALS['qtdeNFFiltrada']++;
-                }
-            }
+            //EMITE NF
+            /* preenche os campos */
+            $fields = $GLOBALS['utils']->fill_fileds_to_nfe($WhmcsApi, $invoice, intval($idInvoiceEmitir));
+            array_push($Nfs, [
+                'numeroRps' => strval($idInvoiceEmitir),
+                'serieRps' => "302",
+                'dataEmissao' => $fields['dataEmissao'],
+                'dataCompetencia' => $fields['dataCompetencia'],
+                'valorServico' => $fields['valorServico'],
+                $fields['isCpfOrCnpj'] => $fields['cnpjOrCpf'],
+                'razaoSocial' => $fields['razaoSocial'],
+                'endereco' => $fields['endereco'],
+                'numero' => "",
+                'bairro' => $fields['bairro'],
+                'codigoMunicipio' => '4209102',
+                'uf' => $fields['uf'],
+                'cep' => $fields['cep'],
+                'email' => $fields['email'],
+                'discriminacao' => $fields['discriminacao']
+            ]);
+            $GLOBALS['qtdeNFFiltrada']++;
         }
     }
     return $Nfs;

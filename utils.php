@@ -93,11 +93,13 @@ class Utils
         return $msgFinal;
     }
 
-    public function fill_fileds_to_nfe(WhmcsApi $WhmcsApi, iterable $invoice): array
+    public function fill_fileds_to_nfe(WhmcsApi $WhmcsApi, array $invoice, int $invoiceId = null): array
     {
         $idsInvoice = [];
-        array_push($idsInvoice, $invoice['id']);
+        $invoiceId !== null ? array_push($idsInvoice, $invoiceId) : array_push($idsInvoice, $invoice['id']);
         $fields = [];
+        if(!in_array('id', $invoice)) $invoice['id'] = $invoiceId;
+        
         $generator = $WhmcsApi->get_clients_details($invoice['userid']);
         foreach ($generator as $clientDetails) {
             $fields['cnpjOrCpf'] = $this->format_cpf_and_cnpj_and_cep($clientDetails['customfields'][0]['value']);
@@ -116,8 +118,6 @@ class Utils
             $fields['email'] = $clientDetails['client']['email'];
             $fields['discriminacao'] = $this->get_description_invoice($WhmcsApi, $idsInvoice);
         }
-
-
 
         return $fields;
     }
