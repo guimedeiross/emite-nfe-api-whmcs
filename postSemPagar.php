@@ -9,9 +9,10 @@ require_once 'utils.php';
 require_once './WHMCS/WhmcsApi.php';
 require_once './consultaLote.php';
 require_once './getNfClientWithoutPaying.php';
+require_once './sendMail.php';
 
 $GLOBALS['utils'] = new Utils;
-$GLOBALS['qtdeNFFiltrada'] = 0;
+$GLOBALS['qtdeNFFiltrada2'] = 0;
 
 $WhmcsApi = new WhmcsApi;
 
@@ -58,7 +59,7 @@ function build_nfe(WhmcsApi $WhmcsApi): array
                 'email' => $fields['email'],
                 'discriminacao' => $fields['discriminacao']
             ]);
-            $GLOBALS['qtdeNFFiltrada']++;
+            $GLOBALS['qtdeNFFiltrada2']++;
         }
     }
     return $Nfs;
@@ -78,12 +79,11 @@ function getCityId(string $state, string $city): string
 try {
     $Nfs = build_nfe($WhmcsApi);
     echo count($Nfs) > 0 ? var_dump($Nfs) : 'Sem Cliente para emitir sem pagamento';
-    exit;
-    /*$end = microtime(true);
+    $end = microtime(true);
     $tempo = ($end - $start) / 60;
-    file_put_contents('tempo.txt', $tempo . PHP_EOL, FILE_APPEND);
-    file_put_contents('qtdeNFFiltrada.txt', $GLOBALS['qtdeNFFiltrada']);
-    if (count($Nfs) > 0) execute_post($Nfs[0]);*/
+    file_put_contents('tempoSemPagar.txt', $tempo . PHP_EOL, FILE_APPEND);
+    file_put_contents('qtdeNFFiltradaSemPagar.txt', $GLOBALS['qtdeNFFiltrada2']);
+    if (count($Nfs) > 0) execute_post($Nfs[0]);
 } catch (\Throwable $th2) {
     $GLOBALS['utils']->add_log_error($th2);
 }
@@ -127,6 +127,8 @@ function execute_post(array $NfsToPost): void
                     if ($updateNote['result'] !== 'success') throw new Exception('Erro ao atualizar notas da NF de ID ' . strval($NfsToPost['numeroRps']), 1014);
                 }
                 file_put_contents('ProtocolosEmitidosNfSemPagar.txt', $NfsToPost['numeroRps'] . ' - ' . $result . PHP_EOL, FILE_APPEND);
+                $sendEmail = new SendMail;
+                $sendEmail->sendMail("NF Junto com boleto Emitida", "infra@joinvix.com.br", "NF número " . $NfsToPost['numeroRps'] . "emitida.");
             }
         } else {
             var_dump($resultDecode);

@@ -24,19 +24,15 @@ function consultarClientes(): array
     }
 
     // Consulta SQL
-    $query = "SELECT *
-    FROM (
-        SELECT tblinvoices.*, ROW_NUMBER() OVER (PARTITION BY tblinvoices.userid ORDER BY tblinvoices.date DESC) AS rn
-        FROM tblinvoices
+    $query = "SELECT * FROM tblinvoices
         WHERE tblinvoices.userid IN (
             SELECT tblclients.id
             FROM tblclients
             JOIN tblcustomfieldsvalues ON tblclients.id = tblcustomfieldsvalues.relid
             WHERE tblcustomfieldsvalues.fieldid = 124 AND tblcustomfieldsvalues.value = 'on'
         )
-    ) AS subquery
-    WHERE rn = 1
-    AND subquery.notes NOT REGEXP '__e__NFEEMITIDA|__e__PROBLEMA$'";
+    AND tblinvoices.status = 'Unpaid' 
+    AND tblinvoices.notes NOT REGEXP '__e__NFEEMITIDA|__e__PROBLEMA$'";
 
     // Executando a consulta
     if ($result = $mysqli->query($query)) {
