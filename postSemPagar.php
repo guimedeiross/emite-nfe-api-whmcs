@@ -24,6 +24,8 @@ function build_nfe(WhmcsApi $WhmcsApi): array
 
     $userIdsCheckNFSemBoleto = consultarClientes();
 
+    if($userIdsCheckNFSemBoleto[0] === 'Nenhum registro encontrado.') die($userIdsCheckNFSemBoleto[0]);
+
     foreach ($userIdsCheckNFSemBoleto as $idInvoiceEmitir) {
         $generator = $WhmcsApi->get_invoice(intval($idInvoiceEmitir));
         foreach ($generator as $invoice) {
@@ -78,7 +80,7 @@ function getCityId(string $state, string $city): string
 
 try {
     $Nfs = build_nfe($WhmcsApi);
-    echo count($Nfs) > 0 ? var_dump($Nfs) : 'Sem Cliente para emitir sem pagamento';
+    //echo count($Nfs) > 0 ? var_dump($Nfs) : 'Sem Cliente para emitir sem pagamento';
     $end = microtime(true);
     $tempo = ($end - $start) / 60;
     file_put_contents('tempoSemPagar.txt', $tempo . PHP_EOL, FILE_APPEND);

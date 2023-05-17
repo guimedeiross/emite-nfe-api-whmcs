@@ -44,8 +44,7 @@ function consultarClientes(): array
                 array_push($userIdsCheckNFSemBoleto, $row['id']);
             }
         } else {
-            echo 'Nenhum registro encontrado.';
-            die();
+            return ['Nenhum registro encontrado.'];
         }
 
         // Liberando os recursos do resultado da consulta
