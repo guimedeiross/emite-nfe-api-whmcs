@@ -10,10 +10,10 @@ function consultarClientes(): array
 
     $userIdsCheckNFSemBoleto = [];
     // Configurações de conexão com o banco de dados
-    $host = $_ENV['HOST'];
-    $database = $_ENV['DATABASE'];
-    $username = $_ENV['USER'];
-    $password = $_ENV['PASSWORD'];
+    $host = $_ENV['DB_HOST'];
+    $database = $_ENV['DB_DATABASE'];
+    $username = $_ENV['DB_USERNAME'];
+    $password = $_ENV['DB_PASSWORD'];
 
     // Conectando ao banco de dados
     $mysqli = new mysqli($host, $username, $password, $database);
