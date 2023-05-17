@@ -80,12 +80,12 @@ function getCityId(string $state, string $city): string
 
 try {
     $Nfs = build_nfe($WhmcsApi);
-    //echo count($Nfs) > 0 ? var_dump($Nfs) : 'Sem Cliente para emitir sem pagamento';
+    var_dump($Nfs);
     $end = microtime(true);
     $tempo = ($end - $start) / 60;
     file_put_contents('tempoSemPagar.txt', $tempo . PHP_EOL, FILE_APPEND);
     file_put_contents('qtdeNFFiltradaSemPagar.txt', $GLOBALS['qtdeNFFiltrada2']);
-    if (count($Nfs) > 0) execute_post($Nfs[0]);
+    //if (count($Nfs) > 0) execute_post($Nfs[0]);
 } catch (\Throwable $th2) {
     $GLOBALS['utils']->add_log_error($th2);
 }
