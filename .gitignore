@@ -3,4 +3,4 @@
 *.log
 error_log
 manualPost.php
-.vendor
+vendor
