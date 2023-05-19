@@ -3,32 +3,39 @@
 declare(strict_types=1);
 
 require 'vendor/autoload.php';
-require_once 'utils.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable('.');
 $dotenv->load();
 
-use \SendGrid\Mail\Mail;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class SendMail
 {
     public function sendMail(string $subject, string $to, string $message, ?string $nameTo = null)
     {
-        $email = new Mail;
+        $email = new PHPMailer();
 
-        $email->setFrom("no-reply-nfeAlert@rowbot.com.br", "Alerta Nfe");
-        $email->setSubject($subject);
-        $email->addTo($to, $nameTo);
-        $email->addContent(
-            "text/html",
-            $message
-        );
-        $sendgrid = new \SendGrid($_ENV['SENDGRID_API_KEY']);
+        //$email->SMTPDebug = 2;
+        $email->isSMTP();
+        $email->Host       = $_ENV['SMTP_HOST'];
+        $email->SMTPAuth   = true;
+        $email->Username   = $_ENV['SMTP_USER'];
+        $email->Password   = $_ENV['SMTP_PASS'];
+        $email->SMTPSecure = 'tls';
+        $email->Port       = 587;
+        $email->setFrom($_ENV['SMTP_NAME_FROM'], "Alerta Nfe");
+        $email->addAddress($to, $nameTo);
+        $email->Subject = $subject;
+        $email->isHTML(true);
+        $email->Body = $message;
+
         try {
-            $response = $sendgrid->send($email);
-            $response_json = json_decode($response->body(), true);
-            if ($response->body() !== '') throw new Exception('Erro ao enviar Email' . 'Detalhes erro: ' . $response_json['errors'][0]['message'], 1007);
+            $response = $email->send();
+            if (!$response) throw new Exception('Erro ao enviar Email' . 'Detalhes erro: ' . $email->ErrorInfo, 1007);
         } catch (Exception $e) {
+            echo $e->getMessage();
+            require_once 'utils.php';
             $utils = new Utils;
             $utils->add_log_error($e);
         }
