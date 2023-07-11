@@ -98,8 +98,8 @@ class Utils
         $idsInvoice = [];
         $invoiceId !== null ? array_push($idsInvoice, $invoiceId) : array_push($idsInvoice, $invoice['id']);
         $fields = [];
-        if(!in_array('id', $invoice)) $invoice['id'] = $invoiceId;
-        
+        if (!array_key_exists('id', $invoice)) $invoice['id'] = $invoiceId;
+
         $generator = $WhmcsApi->get_clients_details($invoice['userid']);
         foreach ($generator as $clientDetails) {
             $fields['cnpjOrCpf'] = $this->format_cpf_and_cnpj_and_cep($clientDetails['customfields'][0]['value']);
@@ -118,7 +118,6 @@ class Utils
             $fields['email'] = $clientDetails['client']['email'];
             $fields['discriminacao'] = $this->get_description_invoice($WhmcsApi, $idsInvoice);
         }
-
         return $fields;
     }
 
